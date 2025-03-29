@@ -30,6 +30,8 @@ contract StudyDAO {
     mapping(address => Resource[]) public studentResources;
 
     uint256 public courseCompletionReward = 10;
+      uint256 public voteReward = 2; 
+    uint256 public resourceContributionReward = 5;
 
     // Events
     event MemberRegistered(address indexed member, bool isTeacher);
@@ -37,6 +39,8 @@ contract StudyDAO {
     event Voted(uint indexed proposalId, address indexed voter, uint256 votes);
     event ProposalFunded(uint indexed proposalId, address indexed funder, uint256 amount);
     event FundingCompleted(uint indexed proposalId, uint256 totalFundsRaised);
+    event TokensAwarded(address indexed member, uint256 amount); 
+    event ReputationBoosted(address indexed member, uint newReputation);
 
     // Register member as teacher or student
     function registerMember(bool isTeacher) public {
@@ -78,7 +82,8 @@ contract StudyDAO {
 
         proposal.votes += members[msg.sender].reputation;
         emit Voted(_proposalId, msg.sender, members[msg.sender].reputation);
-
+        
+        members[msg.sender].tokensEarned += voteReward;
         if (proposal.votes > 3) proposal.approved = true;
     }
 
@@ -110,6 +115,9 @@ contract StudyDAO {
             id: studentResources[msg.sender].length,
             resourceURI: _resourceURI
         }));
+
+        members[msg.sender].tokensEarned += resourceContributionReward;
+        emit TokensAwarded(msg.sender, resourceContributionReward);
     }
 
     // Get all resources saved by the student
@@ -121,11 +129,18 @@ contract StudyDAO {
     function completeCourse() public {
         require(members[msg.sender].isStudent, "Only students can complete courses.");
         members[msg.sender].tokensEarned += courseCompletionReward;
+         emit TokensAwarded(msg.sender, courseCompletionReward);
     }
 
     // Get tokens earned by a student
     function getTokensEarned() public view returns (uint256) {
         return members[msg.sender].tokensEarned;
+    }
+
+    function boostReputation(address _member) public {
+        require(members[_member].reputation > 0, "Member must be registered.");
+        members[_member].reputation += 1; // Increase reputation
+        emit ReputationBoosted(_member, members[_member].reputation);
     }
 
     // Get all proposals
