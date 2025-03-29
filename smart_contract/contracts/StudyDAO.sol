@@ -18,6 +18,9 @@ contract StudyDAO {
         address proposer;
         bool approved;
         bool fundingCompleted;  // New flag to track if the funding is completed
+        uint256 milestonesCompleted;
+        uint256 totalMilestones;
+        mapping(uint256 => bool) milestoneVerified;
     }
 
     struct Resource {
@@ -37,6 +40,9 @@ contract StudyDAO {
     event Voted(uint indexed proposalId, address indexed voter, uint256 votes);
     event ProposalFunded(uint indexed proposalId, address indexed funder, uint256 amount);
     event FundingCompleted(uint indexed proposalId, uint256 totalFundsRaised);
+    event MilestoneVerified(uint indexed proposalId, uint256 milestoneNumber);
+     event FundsWithdrawn(uint indexed proposalId, uint256 milestoneNumber, uint256 amount);
+    event Refunded(uint indexed proposalId, address indexed funder, uint256 amount);
 
     // Register member as teacher or student
     function registerMember(bool isTeacher) public {
@@ -53,19 +59,19 @@ contract StudyDAO {
     }
 
     // Propose content (only teachers can propose)
-    function proposeContent(string memory _description, uint256 _goal) public {
+    function proposeContent(string memory _description, uint256 _goal,uint256 _totalMilestones) public {
         require(members[msg.sender].isTeacher, "Only teachers can propose content.");
+        require(_totalMilestones > 0, "Milestones must be greater than zero.");
 
-        proposals.push(Proposal({
-            id: proposals.length,
-            description: _description,
-            votes: 0,
-            fundsRaised: 0,
-            goal: _goal,
-            proposer: msg.sender,
-            approved: false,
-            fundingCompleted: false // Initially, funding is not complete
-        }));
+         uint256 proposalId = proposals.length;
+        proposals.push();
+        Proposal storage newProposal = proposals[proposalId];
+        
+        newProposal.id = proposalId;
+        newProposal.description = _description;
+        newProposal.goal = _goal;
+        newProposal.proposer = msg.sender;
+        newProposal.totalMilestones = _totalMilestones;
 
         emit ProposalCreated(proposals.length - 1, msg.sender, _description, _goal);
     }
@@ -81,6 +87,7 @@ contract StudyDAO {
 
         if (proposal.votes > 3) proposal.approved = true;
     }
+
 
     // Fund an approved proposal
     function fundProposal(uint _proposalId) public payable {
@@ -100,6 +107,54 @@ contract StudyDAO {
             payable(proposal.proposer).transfer(amount);
             emit FundingCompleted(_proposalId, amount);  // Emit event indicating funding is complete
         }
+    }
+
+     function verifyMilestone(uint _proposalId, uint256 _milestoneNumber) public {
+        require(_proposalId < proposals.length, "Invalid proposal ID.");
+        Proposal storage proposal = proposals[_proposalId];
+        require(msg.sender == proposal.proposer || members[msg.sender].reputation > 1, "Not authorized");
+        require(_milestoneNumber <= proposal.totalMilestones, "Invalid milestone number");
+        require(_milestoneNumber == proposal.milestonesCompleted + 1, "Can only verify next milestone");
+         proposal.milestoneVerified[_milestoneNumber] = true;
+        emit MilestoneVerified(_proposalId, _milestoneNumber);
+    }
+
+     function withdrawMilestoneFunds(uint _proposalId) public {
+        require(_proposalId < proposals.length, "Invalid proposal ID.");
+        Proposal storage proposal = proposals[_proposalId];
+        require(msg.sender == proposal.proposer, "Only proposer can withdraw funds");
+        require(proposal.fundingCompleted, "Funding not completed");
+        require(proposal.milestonesCompleted < proposal.totalMilestones, "All milestones completed");
+        
+        uint256 nextMilestone = proposal.milestonesCompleted + 1;
+        require(proposal.milestoneVerified[nextMilestone], "Milestone not verified");
+        
+        uint256 amountPerMilestone = proposal.goal / proposal.totalMilestones;
+        require(proposal.fundsRaised >= amountPerMilestone, "Insufficient funds");
+        
+        proposal.milestonesCompleted = nextMilestone;
+        proposal.fundsRaised -= amountPerMilestone;
+        payable(proposal.proposer).transfer(amountPerMilestone);
+        
+        emit FundsWithdrawn(_proposalId, nextMilestone, amountPerMilestone);
+    }
+
+     function refundFunds(uint _proposalId) public {
+        require(_proposalId < proposals.length, "Invalid proposal ID.");
+        Proposal storage proposal = proposals[_proposalId];
+        require(proposal.fundingCompleted, "Funding not completed");
+        uint256 remainingFunds = proposal.fundsRaised;
+        proposal.fundsRaised = 0;
+        payable(msg.sender).transfer(remainingFunds);
+        
+        emit Refunded(_proposalId, msg.sender, remainingFunds);
+    }
+
+
+     function isProposalFullyFunded(uint _proposalId) public view returns (bool) {
+        require(_proposalId < proposals.length, "Invalid proposal ID.");
+        return proposals[_proposalId].milestonesCompleted >= proposals[_proposalId].totalMilestones 
+        && proposals[_proposalId].fundsRaised >= proposals[_proposalId].goal;
     }
 
     // Students save their resources (e.g., course documents)
