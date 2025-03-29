@@ -94,8 +94,8 @@ function Proposals() {
           let docs = '';
 
           try {
-            const response = 
-            const metadata = 
+            const response = await fetch(metadataUri);
+            const metadata = await response.json(); 
             title = metadata.title || 'No Title';
             details = metadata.description || 'No Details';
             hours = metadata.timeRequired || '0';
