@@ -28,8 +28,10 @@ contract StudyDAO {
     mapping(address => Member) public members;
     Proposal[] public proposals;
     mapping(address => Resource[]) public studentResources;
+    mapping(address => uint256) public lastVoted;
 
     uint256 public courseCompletionReward = 10;
+    uint256 public votingCooldown = 1 days;
 
     // Events
     event MemberRegistered(address indexed member, bool isTeacher);
@@ -75,11 +77,14 @@ contract StudyDAO {
         require(_proposalId < proposals.length, "Invalid proposal ID.");
         Proposal storage proposal = proposals[_proposalId];
         require(!proposal.approved, "Proposal already approved.");
-
-        proposal.votes += members[msg.sender].reputation;
-        emit Voted(_proposalId, msg.sender, members[msg.sender].reputation);
+        require(block.timestamp >= lastVoted[msg.sender] + votingCooldown, "You must wait before voting again.");
+       
+         uint256 weightedVotes = members[msg.sender].reputation;
+        proposal.votes += weightedVotes;
+        emit Voted(_proposalId, msg.sender, weightedVotes);
 
         if (proposal.votes > 3) proposal.approved = true;
+        lastVoted[msg.sender] = block.timestamp;
     }
 
     // Fund an approved proposal
