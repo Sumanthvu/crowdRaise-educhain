@@ -33,16 +33,16 @@ export const WalletProvider = ({ children }) => {
         return;
       }
 
-      const accounts = await ethereum.requestAccounts({ method: 'eth_requestAccounts' });
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
 
       if (accounts.length === 0) {
         console.log('No account found');
         return;
       }
 
-      const provider = new ethers.provider.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const address = signer.getAddress();
+      const address =await  signer.getAddress();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
       setAccount(address);
 
