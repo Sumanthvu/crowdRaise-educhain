@@ -1,65 +1,32 @@
-# StudyDAO
+SafeMint
+SafeMint is a function used in NFT smart contracts to safely mint new tokens while preventing common security issues. It creates a new token and assigns it to a specific address while implementing critical security checks to prevent attacks like reentrancy.
+In smart contract it is used as _safeMint(arguments);
+The arguments are 
+   1.receiver's address - The wallet address that will receive and own the newly minted NFT
+   2.tokenId - The unique ID number for the new token that is created.
 
-A decentralized education platform where teachers propose courses, students vote and fund proposals, and both parties collaborate for accessible learning. This platform leverages blockchain technology to ensure transparency and reward system integrity.
-
-## Features
-
-- **Member Registration**: Register as a teacher or student.
-- **Proposal System**: Teachers can create proposals for course funding.
-- **Voting Mechanism**: Both students and teachers can vote for proposals.
-- **Crowdfunding**: Fund approved proposals and track progress.
-- **Resource Management**: Students can save and retrieve resources.
-- **Token Rewards**: Students earn tokens upon course completion.
-- **Transparency**: Smart contracts manage voting, funding, and rewards.
-
-## Tech Stack
-
-- **Frontend**: Vite, React.js, TailwindCSS
-- **Blockchain**: Solidity (Smart Contracts deployed on Ethereum/Polygon)
-- **Storage**: IPFS
-- **Wallet Integration**: MetaMask
-
----
-
-## Getting Started
-
-Follow these instructions to set up and run the project on your local machine.
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) and npm installed.
-- [MetaMask](https://metamask.io/) browser extension.
-- [Git](https://git-scm.com/) installed.
-- Ethereum test network setup (e.g., Sepolia).
-
----
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/datmedevil17/hack-web3conf
-2. Change to the frontend directory:
-   ```bash
-   cd client
-3. Install the dependencies:
-   ```bash
-   npm install
-4. Run the local server at localhost:3000 :
-   ```bash
-   npm run dev
-
-# crowdRaise-educhain
-This Project is depolyed on lineaSepolia : 0xC39Fcb288e011983D213787CB04c4d69666d605a
-TestNetExplorerLink: https://sepolia.lineascan.build/address/0xC39Fcb288e011983D213787CB04c4d69666d605a
-
-This Project is depolyed on arbitrumSepolia : 0xB6822f103b7bF5d7C361cA728C42627511c517D4
-TestNetExplorerLink: https://sepolia.arbiscan.io/address/0xB6822f103b7bF5d7C361cA728C42627511c517D4
-
-This Project is depolyed on eduChain : 0xC39Fcb288e011983D213787CB04c4d69666d605a
-TestNetExplorerLink: https://edu-chain-testnet.blockscout.com/address/0xC39Fcb288e011983D213787CB04c4d69666d605a
-
-This Project is depolyed on mantle : 0xC39Fcb288e011983D213787CB04c4d69666d605a
-TestNetExplorerLink: https://sepolia.mantlescan.xyz/address/0xC39Fcb288e011983D213787CB04c4d69666d605a
+Example(In solidity)
+function safeMint(address to, uint256 tokenId) public onlyOwner {
+    _safeMint(to, tokenId);
+}
+This function creates a new NFT with the ID number specified in "tokenId" and sends it to the wallet address in "to". Only the owner of the contract can use this function, which safely mints the NFT by calling the internal _safeMint function that includes security checks.RetryClaude can make mistakes. Please double-check responses.
 
 
+
+SetTokenURI
+SetTokenURI is a function used in NFT smart contracts to link tokens with their metadata. It associates a specific token ID with a URI (web address) that points to the token's information like images and descriptions.
+In smart contract it is used as _setTokenURI(arguments); The arguments are:
+
+tokenId - The unique ID number of the existing NFT you want to set metadata for
+URI - The web address (link) that points to the JSON file containing the NFT's metadata
+
+In smaart contract is is used as  _setTokenURI(arguments);
+The arguments are
+   1. tokenId - The ID of the existing token you want to set metadata for
+   2._tokenURI - The URI (link) pointing to the token's metadata .It should always be a string 
+
+Example(In solidity)
+function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyOwner {
+    _setTokenURI(tokenId, _tokenURI);
+}
+This function connects an existing NFT (identified by "tokenId") to its metadata by setting its URI to the provided link. Only the owner of the contract can use this function. The URI typically points to a JSON file that contains all the information about how the NFT should appear and what properties it has.RetryClaude does not have the ability to run the code it generates yet.Claude can make mistakes. Please double-check responses.
